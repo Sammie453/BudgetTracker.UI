@@ -8,28 +8,45 @@ function BudgetForm({ onSubmit }) {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+
+    // Clear field error when user starts typing
+    if (errors[e.target.name]) {
+      setErrors({
+        ...errors,
+        [e.target.name]: ''
+      });
+    }
+  };
 
   const validate = () => {
-    const newErrors = {};
+    const validationErrors = {};
 
     if (!formData.category.trim()) {
-      newErrors.category = 'Category is required';
+      validationErrors.category = 'Category is required';
     }
 
     if (!formData.limit) {
-      newErrors.limit = 'Budget limit is required';
+      validationErrors.limit = 'Budget limit is required';
     } else if (Number(formData.limit) <= 0) {
-      newErrors.limit = 'Budget limit must be greater than 0';
+      validationErrors.limit =
+        'Budget limit must be greater than 0';
     }
 
     if (!formData.month) {
-      newErrors.month = 'Month is required';
+      validationErrors.month = 'Month is required';
     }
 
-    return newErrors;
+    return validationErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const validationErrors = validate();
@@ -39,73 +56,125 @@ function BudgetForm({ onSubmit }) {
       return;
     }
 
-    setErrors({});
-    onSubmit(formData);
+    try {
+      setLoading(true);
+
+      await onSubmit({
+        category: formData.category,
+        limit: Number(formData.limit),
+        month: formData.month
+      });
+
+      setFormData({
+        category: '',
+        limit: '',
+        month: ''
+      });
+
+      setErrors({});
+    } catch (error) {
+      setErrors({
+        submit:
+          error.message ||
+          'Failed to create budget'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form className="budget-form" onSubmit={handleSubmit}>
-      <div className="form-group">
-        <label>Category</label>
-        <input
-          type="text"
-          value={formData.category}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              category: e.target.value
-            })
-          }
-        />
-        {errors.category && (
-          <span className="error">
-            {errors.category}
-          </span>
-        )}
-      </div>
+    <div className="budget-form-container">
+      <h2>Create Budget</h2>
 
-      <div className="form-group">
-        <label>Budget Limit</label>
-        <input
-          type="number"
-          value={formData.limit}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              limit: e.target.value
-            })
-          }
-        />
-        {errors.limit && (
-          <span className="error">
-            {errors.limit}
-          </span>
-        )}
-      </div>
+      {errors.submit && (
+        <div className="error-banner">
+          {errors.submit}
+        </div>
+      )}
 
-      <div className="form-group">
-        <label>Month</label>
-        <input
-          type="month"
-          value={formData.month}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              month: e.target.value
-            })
-          }
-        />
-        {errors.month && (
-          <span className="error">
-            {errors.month}
-          </span>
-        )}
-      </div>
+      <form
+        className="budget-form"
+        onSubmit={handleSubmit}
+      >
+        <div className="form-group">
+          <label>Category</label>
 
-      <button type="submit">
-        Create Budget
-      </button>
-    </form>
+          <input
+            type="text"
+            name="category"
+            placeholder="Enter category"
+            value={formData.category}
+            onChange={handleChange}
+            className={
+              errors.category
+                ? 'error-input'
+                : ''
+            }
+          />
+
+          {errors.category && (
+            <span className="error">
+              {errors.category}
+            </span>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label>Budget Limit</label>
+
+          <input
+            type="number"
+            name="limit"
+            placeholder="Enter amount"
+            value={formData.limit}
+            onChange={handleChange}
+            className={
+              errors.limit
+                ? 'error-input'
+                : ''
+            }
+          />
+
+          {errors.limit && (
+            <span className="error">
+              {errors.limit}
+            </span>
+          )}
+        </div>
+
+        <div className="form-group">
+          <label>Month</label>
+
+          <input
+            type="month"
+            name="month"
+            value={formData.month}
+            onChange={handleChange}
+            className={
+              errors.month
+                ? 'error-input'
+                : ''
+            }
+          />
+
+          {errors.month && (
+            <span className="error">
+              {errors.month}
+            </span>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+        >
+          {loading
+            ? 'Creating Budget...'
+            : 'Create Budget'}
+        </button>
+      </form>
+    </div>
   );
 }
 

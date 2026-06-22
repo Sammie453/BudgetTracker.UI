@@ -1,10 +1,5 @@
-function BudgetCard({
-  category,
-  spent,
-  limit
-}) {
-  const percentage =
-    (spent / limit) * 100;
+function BudgetCard({ category, spent, limit }) {
+  const percentage = (spent / limit) * 100;
 
   return (
     <div className="budget-card">
@@ -22,6 +17,8 @@ function BudgetCard({
           }}
         />
       </div>
+
+      <p>{percentage.toFixed(0)}%</p>
     </div>
   );
 }
